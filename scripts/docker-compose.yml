@@ -1,0 +1,31 @@
+version: "3.1"
+services:
+  my-registry:
+    image: registry:2.6.1
+    volumes:
+      - registry:/var/lib/registry
+    ports:
+      - 55001:5000
+    restart: unless-stopped
+
+  teamcity:
+    image: jetbrains/teamcity-server:2017.1.2
+    volumes:
+      - teamcity-server-datadir:/data/teamcity_server/datadir
+      - teamcity-server-logs:/opt/teamcity/logs
+    ports:
+      - 8111:8111
+    restart: unless-stopped
+    
+  teamcity-agent:
+    image: jetbrains/teamcity-agent:2017.1.2
+    environment:
+      SERVER_URL: http://teamcity:8111
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+volumes:
+  registry:
+  teamcity-server-datadir:
+  teamcity-server-logs:

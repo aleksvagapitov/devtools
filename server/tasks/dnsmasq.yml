@@ -1,0 +1,58 @@
+- name: Set up DnsMasq
+  become: true
+  tags: 
+    - dnsmasq 
+  block:
+    - name: Disable Systemctl
+      command: systemctl disable systemd-resolved
+    - name: Stop System
+      command: systemctl stop systemd-resolved
+    - name: Remove resolv config
+      command: rm /etc/resolv.conf
+    - name: add new /etc/resolv.conf 
+      copy:
+        dest: /etc/resolv.conf
+        content: |
+          nameserver 127.0.0.1
+          nameserver 8.8.8.8
+    - name: Install dnsmasq
+      apt: pkg=dnsmasq state=latest
+    - name: Add dnsmasq config
+      copy: 
+        dest: /etc/dnsmasq.conf
+        content: |
+          port=53
+          domain-needed
+          bogus-priv
+          strict-order
+          expand-hosts
+          domain=work.dev
+          listen-address=127.0.0.1
+          listen-address=10.8.0.1
+    - name: Restart dnsmasq
+      command: systemctl restart dnsmasq
+    - name: Create known hosts config
+      shell: |
+        sed -i "/127.0.0.1/ a 172.17.0.1 work.dev" /etc/hosts
+        sed -i "/127.0.0.1/ a 172.17.0.1 pgadmin.work.dev" /etc/hosts
+        sed -i "/127.0.0.1/ a 172.17.0.1 registry.work.dev" /etc/hosts
+        # systemctl restart bind9
+        systemctl restart dnsmasq
+
+    - name: Set Up  Nginx config
+      template: src=nginx.conf dest=/etc/nginx/sites-available/default
+
+    - name: Restart Nginx 
+      command: systemctl restart nginx
+
+    - name: Ensure etc/iptables folder exists
+      file:
+        path: /etc/iptables
+        state: directory  
+    
+    - name: Configure IP Tables
+      template: src=rules.v4 dest=/etc/iptables/rules.v4
+
+    - name: Restore IpTables
+      shell: 
+        cmd: iptables-restore < /etc/iptables/rules.v4

@@ -1,0 +1,5 @@
+- name: Start Infrastructure
+  become: true 
+  shell: cd /home/user/.scripts && docker-compose up -d
+  tags: 
+    - infra 

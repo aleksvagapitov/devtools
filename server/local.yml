@@ -1,0 +1,21 @@
+- hosts: localhost
+  become: true
+  pre_tasks:
+  - name: Update Cache
+    apt:
+      update-cache: true
+    tags:
+      - core
+      - dnsmasq
+      - docker
+      - git
+      - infra
+  - name: Wait for sudo
+    become: yes
+    shell:  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
+  tasks:
+  - include: tasks/core.yml
+  - include: tasks/git.yml 
+  - include: tasks/dnsmasq.yml
+  - include: tasks/docker.yml
+  - include: tasks/infra.yml

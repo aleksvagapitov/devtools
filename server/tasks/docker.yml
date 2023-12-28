@@ -1,0 +1,77 @@
+- name: Install docker packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - software-properties-common
+  tags:
+    - docker
+- name: Add Docker s official GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  tags:
+    - docker
+- name: Verify that we have the key with the fingerprint
+  apt_key:
+    id: 0EBFCD88
+    state: present
+  tags:
+    - docker
+- name: Set up the stable repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+    state: present
+    update_cache: yes
+  tags:
+    - docker
+- name: Update apt packages
+  apt:
+    update_cache: yes
+  tags:
+    - docker
+- name: Install docker
+  apt:
+    name: docker-ce
+    state: present
+    update_cache: yes
+  tags:
+    - docker
+- name: Add remote "user" user to "docker" group
+  user:
+    name: "user"
+    group: "docker"
+    append: yes
+  tags:
+    - docker
+- name: Install docker-compose
+  get_url: 
+    url : https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: 'u+x,g+x'
+- name: Ensure etc/docker folder exists
+  file:
+    path: /etc/docker
+    state: directory  
+- name: Add Docker config
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      { "iptables": false }
+- name: Change Default Docker Options
+  copy:
+    dest: /etc/default/docker
+    content: |
+      DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4 --iptables=false"
+- name: Add IP Forwarding
+  copy:
+    dest: /proc/sys/net/ipv4/ip_forward
+    content: |
+      1
+
+- name: Start Docker
+  shell: systemctl start docker

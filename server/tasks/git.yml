@@ -1,0 +1,39 @@
+- name: set up ssh config
+  become_user: user
+  template: src=config dest=~/.ssh/config
+  tags:
+    - git
+
+- name: change config permission
+  become_user: user
+  ansible.builtin.file:
+    path: "~/.ssh/config"
+    owner: "user"
+    group: "user"
+    mode: '0600'
+
+- name: change ssh key permission
+  become_user: user
+  ansible.builtin.file:
+    path: "~/.ssh/github"
+    owner: "user"
+    group: "user"
+    mode: '0600'
+
+- name: Git personal setup email
+  become_user: user 
+  git_config:
+    name: user.email
+    scope: global
+    value: "aleksvagapitov@gmail.com"
+  tags:
+  - git
+
+- name: Git personal setup name
+  become_user: user
+  git_config:
+    name: user.name
+    scope: global
+    value: "Aleksandr Agapitov"
+  tags:
+  - git
