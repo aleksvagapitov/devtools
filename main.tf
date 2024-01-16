@@ -44,11 +44,49 @@ resource "hcloud_server" "jump-server" {
       timeout     = "2m"
     }
   }
+
+  provisioner "remote-exec" {
+    script = "scripts/remote-config.sh"
+
+    connection {
+      type        = "ssh"
+      host        = self.ipv4_address
+      private_key = file("~/.ssh/devtools-kube")
+      user        = "root"
+      timeout     = "2m"
+    }
+  }
+
+  provisioner "file" {
+    source      = "server"
+    destination = ".server/"
+
+    connection {
+      type        = "ssh"
+      host        = self.ipv4_address
+      private_key = file("~/.ssh/devtools-kube")
+      user        = "root"
+      timeout     = "2m"
+    }
+  }
+
+  provisioner "file" {
+    source      = "scripts"
+    destination = ".scripts/"
+
+    connection {
+      type        = "ssh"
+      host        = self.ipv4_address
+      private_key = file("~/.ssh/devtools-kube")
+      user        = "root"
+      timeout     = "2m"
+    }
+  }
 }
 
 # Create the kubernetes nodes
 resource "hcloud_server" "kube-node" {
-  count       = 3
+  count       = 0
   name        = "kube-node-${count.index + 1}"
   image       = "debian-12"
   server_type = "cx21"
@@ -84,4 +122,11 @@ resource "hcloud_network_subnet" "kubernetes-node-subnet" {
   ip_range     = "172.16.0.0/24"
 }
 
-
+resource "local_file" "hosts_cfg" {
+    content = templatefile("server/inventory.tmpl", 
+        {
+            ubuntu_workers = hcloud_server.kube-node
+        }
+    )
+    filename = "server/inventory"
+}

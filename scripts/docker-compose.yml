@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+  registry.local:
+    image: registry:2.7
+    container_name: registry
+    restart: unless-stopped
+    ports:
+      - 55000:5000
+    volumes:
+      - registry:/var/lib/registry
+    networks:
+      - infrastructure
+  
+  jenkins:
+    container_name: jenkins
+    build:
+      context: ./jenkins
+    privileged: true
+    user: root
+    restart: unless-stopped
+    ports:
+      - 8111:8080
+      - 50000:50000
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - infrastructure
+      
+networks:
+  infrastructure: 
+
+volumes:
+  registry:
+  jenkins_home:
