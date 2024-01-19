@@ -1,7 +1,23 @@
 - name: Set up Network
   tags: 
-    - network
+    - iptables
   block:
+    - name: Disable Systemctl
+      command: systemctl disable systemd-resolved
+
+    - name: Stop System
+      command: systemctl stop systemd-resolved
+
+    - name: Remove resolv config
+      command: rm /etc/resolv.conf
+
+    - name: add new /etc/resolv.conf 
+      copy:
+        dest: /etc/resolv.conf
+        content: |
+          nameserver 127.0.0.1
+          nameserver 8.8.8.8
+
     - name: Create known hosts config
       shell: |
         sed -i "/127.0.0.1/ a 172.16.0.100 my-registry" /etc/hosts

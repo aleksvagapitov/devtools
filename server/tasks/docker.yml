@@ -41,13 +41,6 @@
     update_cache: yes
   tags:
     - docker
-- name: Add remote "user" user to "docker" group
-  user:
-    name: "user"
-    group: "docker"
-    append: yes
-  tags:
-    - docker
 - name: Install docker-compose
   get_url: 
     url : https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
@@ -62,19 +55,17 @@
     dest: /etc/docker/daemon.json
     content: |
       { 
-        "iptables": false,
-        "insecure-registries":["172.16.0.100:55000"]
+        "insecure-registries":["http://my-registry:55000"]
       }
 - name: Change Default Docker Options
   copy:
     dest: /etc/default/docker
     content: |
-      DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4 --iptables=false"
+      DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4"
 - name: Add IP Forwarding
   copy:
     dest: /proc/sys/net/ipv4/ip_forward
     content: |
       1
-
 - name: Start Docker
-  shell: systemctl start docker
+  shell: systemctl restart docker

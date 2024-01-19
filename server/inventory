@@ -2,6 +2,7 @@
 172.16.0.100
 
 [workers]
+172.16.0.101
 
 [masters:vars]
 ansible_connection=local
