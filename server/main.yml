@@ -31,10 +31,13 @@
       register: master_token
     - name: Show Master Token
       debug: var=master_token.stdout
-    - name: Start Docker Swarm
-      shell: cd ~/.scripts/swarm && docker stack deploy -c viz.yml viz
+    - name: Create Infrastructure Network
+      shell: docker network create -d overlay infrastructure
     - name: Start Infrastructure
-      shell: cd ~/.scripts && docker-compose up -d
+      shell: cd ~/.scripts && docker stack deploy -c infra.yml infra
+    - name: Build Jenkins Image
+      shell: cd ~/.scripts/jenkins && docker build -t my-registry:55000/jenkins --no-cache .        
+
 
 - name: Join Swarm Cluster
   hosts: workers

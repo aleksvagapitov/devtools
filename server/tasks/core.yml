@@ -6,7 +6,6 @@
       - vim
       - wget
       - curl 
-      - nginx
       - snapd
       - ripgrep
       - make

@@ -1,0 +1,63 @@
+version: "3.7"
+
+services:
+  registry:
+    image: registry:2.7
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+         condition: on-failure
+      placement:
+        constraints: 
+          - node.role==manager
+    ports:
+      - 55000:5000
+    volumes:
+      - registry:/var/lib/registry
+    networks:
+      - infrastructure
+  
+  jenkins:
+    image: my-registry:55000/jenkins
+    user: root
+    ports:
+      - 8111:8080
+      - 50000:50000
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+         condition: on-failure
+      placement:
+        constraints: 
+          - node.role==manager
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - infrastructure
+  viz:
+    image: dockersamples/visualizer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8090:8080
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+      
+networks:
+  infrastructure: 
+    driver: overlay
+    external: true
+
+volumes:
+  registry:
+  jenkins_home:
