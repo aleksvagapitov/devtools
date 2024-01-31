@@ -55,8 +55,25 @@
     dest: /etc/docker/daemon.json
     content: |
       { 
+        "hosts": [ 
+          "unix:///var/run/docker.sock",
+          "tcp://0.0.0.0:2375"
+        ],
+        "experimental": true,
         "insecure-registries":["http://my-registry:55000"]
       }
+
+- name: Create Docker Service Directory
+  shell: mkdir -p /etc/systemd/system/docker.service.d/
+
+- name: Add Docker config
+  copy:
+    dest: /etc/systemd/system/docker.service.d/override.conf
+    content: |
+      [Service]
+      ExecStart=
+      ExecStart=/usr/bin/dockerd --config-file /etc/docker/daemon.json
+
 - name: Change Default Docker Options
   copy:
     dest: /etc/default/docker
@@ -68,4 +85,4 @@
     content: |
       1
 - name: Start Docker
-  shell: systemctl restart docker
+  shell: systemctl daemon-reload && systemctl start docker.socket && systemctl start docker && systemctl restart docker
