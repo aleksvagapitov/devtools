@@ -29,8 +29,10 @@ COMMIT
 # Incoming
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
--A INPUT -p tcp -m multiport --dports 22,80,2375,2377,8080:8081,55000,5432:5434 -j ACCEPT
--A INPUT -p udp -m multiport --dports 1194,90000:61000 -j ACCEPT
+# Infra Ports
+-A INPUT -p tcp -m multiport --dports 22,80,2375,2377,7946 -j ACCEPT
+-A INPUT -p udp -m multiport --dports 1194,4789,7946,60000:61000 -j ACCEPT
+
 -A INPUT -j DROP
 
 # Outgoing

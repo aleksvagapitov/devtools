@@ -14,7 +14,7 @@ resource "hcloud_ssh_key" "jump_server" {
 resource "hcloud_server" "jump-server" {
   name        = "jump-server"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx21"
   datacenter  = "hel1-dc2"
   ssh_keys    = ["My SSH KEY"]
   public_net  {
@@ -86,10 +86,10 @@ resource "hcloud_server" "jump-server" {
 
 # Create the kubernetes nodes
 resource "hcloud_server" "kube-node" {
-  count       = 1
+  count       = 2
   name        = "kube-node-${count.index + 1}"
   image       = "ubuntu-22.04"
-  server_type = "cx21"
+  server_type = "cx11"
   datacenter  = "hel1-dc2"
   ssh_keys    = ["My SSH KEY", "JUMP SERVER SSH KEY"]
   public_net  {

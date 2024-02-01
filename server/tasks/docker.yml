@@ -55,11 +55,6 @@
     dest: /etc/docker/daemon.json
     content: |
       { 
-        "hosts": [ 
-          "unix:///var/run/docker.sock",
-          "tcp://0.0.0.0:2375"
-        ],
-        "experimental": true,
         "insecure-registries":["http://my-registry:55000"]
       }
 
@@ -85,4 +80,4 @@
     content: |
       1
 - name: Start Docker
-  shell: systemctl daemon-reload && systemctl start docker.socket && systemctl start docker && systemctl restart docker
+  shell: systemctl daemon-reload && systemctl start docker.socket && systemctl restart docker
