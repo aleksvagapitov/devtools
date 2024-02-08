@@ -86,7 +86,7 @@ resource "hcloud_server" "jump-server" {
 
 # Create the kubernetes nodes
 resource "hcloud_server" "kube-node" {
-  count       = 2
+  count       = 1
   name        = "kube-node-${count.index + 1}"
   image       = "ubuntu-22.04"
   server_type = "cx11"

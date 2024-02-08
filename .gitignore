@@ -3,3 +3,4 @@
 *.tfstate.backup
 *.auto.tfvars
 *.terraform.lock.hcl
+inventory
