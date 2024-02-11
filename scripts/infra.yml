@@ -23,8 +23,8 @@ services:
     command:
       - "--log.level=WARN"
       - "--accesslog=true"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
+      # - "--api.dashboard=true"
+      # - "--api.insecure=true"
       - "--ping=true"
       - "--ping.entrypoint=ping"
       - "--entryPoints.ping.address=:8082"
@@ -86,19 +86,6 @@ services:
         - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
         - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
-  whoami:
-    image: 'traefik/whoami'
-    deploy:
-      labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.whoami.rule=(Host(`aleksvagapitov.com`) || Host(`www.aleksvagapitov.com`))' # Put in your domain
-      - 'traefik.http.routers.whoami.entrypoints=websecure'
-      - 'traefik.http.routers.whoami.tls.certresolver=letsencrypt'
-      - 'traefik.http.routers.whoami.service=whoamiservice'
-      - 'traefik.http.services.whoamiservice.loadbalancer.server.port=80' # Required in swarms, https://doc.traefik.io/traefik/v2.0/routing/providers/docker/#services
-    networks:
-      - infrastructure
-
   jenkins:
     image: my-registry:55000/jenkins
     user: root
@@ -144,17 +131,14 @@ services:
         constraints: 
           - node.role==manager
       labels:
-        - com.docker.stack.namespace=tool
-        - traefik.frontend.passHostHeader=true
-        - traefik.backend.loadbalancer.swarm=true
-        - traefik.backend=portainer
-        - traefik.port=9000
-        - traefik.frontend.rule=Host:${HOSTNAME_PORTAINER}
-        - traefik.docker.network=infrastructure
-        - traefik.frontend.entryPoints=http,https
-        - traefik.enable=true
+        - 'traefik.enable=true'
+        - 'traefik.http.routers.portainer.rule=Host(`portainer.aleksvagapitov.com`)' # Put in your domain
+        - 'traefik.http.routers.portainer.entrypoints=websecure'
+        - 'traefik.http.routers.portainer.tls.certresolver=letsencrypt'
+        - 'traefik.http.routers.portainer.service=portainetservice'
+        - 'traefik.http.services.portainetservice.loadbalancer.server.port=9000' # Required in swarms, https://doc.traefik.io/traefik/v2.0/routing/providers/docker/#services
     ports:
-      - 9000:9000
+      - 9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /etc/localtime:/etc/localtime:ro
@@ -186,11 +170,20 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - 8090:8080
+      - 8080
+    networks:
+      - infrastructure
     deploy:
       placement:
         constraints:
           - node.role==manager
+      labels:
+        - 'traefik.enable=true'
+        - 'traefik.http.routers.viz.rule=Host(`viz.aleksvagapitov.com`)' # Put in your domain
+        - 'traefik.http.routers.viz.entrypoints=websecure'
+        - 'traefik.http.routers.viz.tls.certresolver=letsencrypt'
+        - 'traefik.http.routers.viz.service=vizservice'
+        - 'traefik.http.services.vizservice.loadbalancer.server.port=8080' # Required in swarms, https://doc.traefik.io/traefik/v2.0/routing/providers/docker/#services
       
 networks:
   infrastructure: 
