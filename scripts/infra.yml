@@ -68,7 +68,7 @@ services:
       labels:
         - "traefik.enable=true"
         # Traefik URL (replace with yours) 
-        - 'traefik.http.routers.traefik.rule=(Host(`aleksvagapitov.com`) || Host(`www.aleksvagapitov.com`)) && (PathPrefix(`/traefik`) || PathPrefix(`/api`))' # Put in your domain
+        - 'traefik.http.routers.traefik.rule=Host(`traefik.aleksvagapitov.com`)' # Put in your domain
         # - "traefik.http.routers.dashboard.rule=Host(`traefik.heyvaldemar.net`)"
         - "traefik.http.routers.dashboard.service=api@internal"
         - "traefik.http.routers.dashboard.entrypoints=websecure"
