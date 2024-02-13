@@ -23,8 +23,8 @@ services:
     command:
       - "--log.level=WARN"
       - "--accesslog=true"
-      # - "--api.dashboard=true"
-      # - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
       - "--ping=true"
       - "--ping.entrypoint=ping"
       - "--entryPoints.ping.address=:8082"
@@ -68,8 +68,7 @@ services:
       labels:
         - "traefik.enable=true"
         # Traefik URL (replace with yours) 
-        - 'traefik.http.routers.traefik.rule=Host(`traefik.aleksvagapitov.com`)' # Put in your domain
-        # - "traefik.http.routers.dashboard.rule=Host(`traefik.heyvaldemar.net`)"
+        - 'traefik.http.routers.dashboard.rule=Host(`traefik.aleksvagapitov.com`)' # Put in your domain
         - "traefik.http.routers.dashboard.service=api@internal"
         - "traefik.http.routers.dashboard.entrypoints=websecure"
         - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
@@ -120,7 +119,6 @@ services:
 
   portainer:
     image: portainer/portainer:1.20.0
-    container_name: portainer
     command: -H unix:///var/run/docker.sock
     deploy:
       mode: replicated
@@ -164,27 +162,7 @@ services:
       - infrastructure
     deploy:
       mode: global
-
-  viz:
-    image: dockersamples/visualizer
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 8080
-    networks:
-      - infrastructure
-    deploy:
-      placement:
-        constraints:
-          - node.role==manager
-      labels:
-        - 'traefik.enable=true'
-        - 'traefik.http.routers.viz.rule=Host(`viz.aleksvagapitov.com`)' # Put in your domain
-        - 'traefik.http.routers.viz.entrypoints=websecure'
-        - 'traefik.http.routers.viz.tls.certresolver=letsencrypt'
-        - 'traefik.http.routers.viz.service=vizservice'
-        - 'traefik.http.services.vizservice.loadbalancer.server.port=8080' # Required in swarms, https://doc.traefik.io/traefik/v2.0/routing/providers/docker/#services
-      
+    
 networks:
   infrastructure: 
     driver: overlay
