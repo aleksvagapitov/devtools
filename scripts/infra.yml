@@ -23,8 +23,6 @@ services:
     command:
       - "--log.level=WARN"
       - "--accesslog=true"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
       - "--ping=true"
       - "--ping.entrypoint=ping"
       - "--entryPoints.ping.address=:8082"
@@ -38,6 +36,9 @@ services:
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--providers.docker.exposedByDefault=false"
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      # Dashboard Section
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
       # Email for Let's Encrypt (replace with yours)
       - "--certificatesresolvers.letsencrypt.acme.email=mail@aleksvagapitov.com"
       - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
