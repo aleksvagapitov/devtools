@@ -11,9 +11,9 @@
     become: yes
     shell:  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
   tasks:
-  - include: tasks/core.yml
-  - include: tasks/iptables.yml
-  - include: tasks/docker.yml
+  - import_tasks: tasks/core.yml
+  - import_tasks: tasks/iptables.yml
+  - import_tasks: tasks/docker.yml
 
 - name: Init Swarm Master
   hosts: masters
