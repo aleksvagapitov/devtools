@@ -11,7 +11,7 @@
     - name: Remove resolv config
       command: rm /etc/resolv.conf
 
-    - name: add new /etc/resolv.conf 
+    - name: Add new /etc/resolv.conf 
       copy:
         dest: /etc/resolv.conf
         content: |

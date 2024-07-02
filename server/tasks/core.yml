@@ -1,11 +1,11 @@
-- name: Install System Packages 
+- name: Install System Packages
   apt:
     pkg:
       - software-properties-common
       - man
       - vim
       - wget
-      - curl 
+      - curl
       - snapd
       - ripgrep
       - make

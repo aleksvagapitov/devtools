@@ -1,15 +1,23 @@
+[jump-server]
+${ jump_server_ip }
+
 [masters]
-172.16.0.100
+%{ for kube_node in masters ~}
+${ kube_node.ip }
+%{ endfor ~}
 
 [workers]
-%{ for kube_node in ubuntu_workers ~}
-%{ for node in kube_node.network ~}
-${node.ip}
-%{ endfor ~}
+%{ for kube_node in workers ~}
+${ kube_node.ip }
 %{ endfor ~}
 
-[masters:vars]
+[jump-server:vars]
 ansible_connection=local
+public_ip=${jump_server_public_ip}
+
+[masters:vars]
+ansible_ssh_private_key_file=~/.ssh/jump-server
+ansible_ssh_user=root
 
 [workers:vars]
 ansible_ssh_private_key_file=~/.ssh/jump-server
