@@ -9,7 +9,6 @@
         - docker
 
     - name: Wait for sudo
-      become: yes
       shell: while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
 
   tasks:
@@ -21,7 +20,6 @@
   hosts: all
   tasks:
     - name: Install dependencies
-      become: yes
       apt:
         name:
           - apt-transport-https
@@ -32,8 +30,11 @@
         state: present
         update_cache: yes
 
+    - name: Disable swapoff
+      shell: |
+        swapoff -a && sed -i '/ swap / s/^/#/' /etc/fstab
+
     - name: Ensure /etc/apt/keyrings directory exists
-      become: yes
       file:
         path: /etc/apt/keyrings
         state: directory
@@ -50,7 +51,6 @@
         state: present
 
     - name: Update apt package index
-      become: yes
       apt:
         update_cache: yes
 
@@ -60,48 +60,58 @@
           - kubelet
           - kubeadm
           - kubectl
+          - containerd
         state: present
         update_cache: yes
 
     - name: Hold Kubernetes packages at current version
-      become: yes
       shell: |
         apt-mark hold kubelet kubeadm kubectl
     
-    - name: Restart containerd service
-      become: yes
+    - name: Configure containerd service
       shell: |
-        rm /etc/containerd/config.toml && systemctl restart containerd.service
+        sh -c "containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sed 's|registry.k8s.io/pause:3.[4-8]|registry.k8s.io/pause:3.9|' > /etc/containerd/config.toml" && systemctl restart containerd.service
+      args:
+        executable: /bin/bash
+    
+    - name: Restart containerd service
+      shell: |
+        systemctl restart containerd.service && systemctl restart kubelet.service && systemctl enable kubelet.service
 
-- name: Init Kubernetes Master
+- name: Initialize Kubernetes Master
   hosts: jump-server
   gather_facts: False
   tasks:
     - name: Initialize Kubernetes Master
-      command: kubeadm init --control-plane-endpoint={{ hostvars[groups['jump-server'][0]].public_ip }} --upload-certs --pod-network-cidr=172.16.0.0/16
+      command: kubeadm init --control-plane-endpoint="{{ hostvars[groups['jump-server'][0]].public_ip }}" --upload-certs --pod-network-cidr=192.168.0.0/16
       register: kubeadm_init
+      ignore_errors: yes
 
-    - name: Create .kube directory
-      become: yes
+    - name: Check if initialization was successful
+      fail:
+        msg: "Kubeadm initialization failed. Please check the output of kubeadm init command."
+      when: kubeadm_init.failed
+
+    - name: Create .kube directory if not exists
       file:
-        path: /root/.kube
+        path: "/root/.kube"
         state: directory
         mode: 0700
 
     - name: Copy admin.conf to root's kube config
-      become: yes
-      shell: |
-        mkdir -p /root/.kube
-        cp -i /etc/kubernetes/admin.conf /root/.kube/config
-        chown root:root /root/.kube/config
-        export KUBECONFIG=/etc/kubernetes/admin.conf
+      copy:
+        src: "/etc/kubernetes/admin.conf"
+        dest: "/root/.kube/config"
+        remote_src: yes
+        owner: root
+        group: root
+        mode: 0600
 
-    - name: Copy admin.conf to ansible user's kube config
-      become: yes
-      shell: |
-        mkdir -p $HOME/.kube
-        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-        chown $(id -u):$(id -g) $HOME/.kube/config
+    - name: Set KUBECONFIG environment variable for root
+      lineinfile:
+        path: "/root/.bashrc"
+        line: "export KUBECONFIG=/root/.kube/config"
+        create: yes
 
     - name: Get Certificate Key
       command: kubeadm init phase upload-certs --upload-certs
@@ -109,7 +119,7 @@
       changed_when: False
 
     - name: Get Join Command for Control Plane Nodes
-      command: kubeadm token create --print-join-command --certificate-key {{ cert_key.stdout_lines[-1] }}
+      command: kubeadm token create --print-join-command --certificate-key "{{ cert_key.stdout_lines[-1] }}"
       register: join_command_cp
 
     - name: Get Join Command for Worker Nodes
@@ -121,6 +131,15 @@
         join_command_cp: "{{ join_command_cp.stdout }}"
         join_command_worker: "{{ join_command_worker.stdout }}"
 
+    - name: Install the Tigera Calico
+      command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
+
+    - name: Install Calico Network Plugin
+      command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml
+
+    - name: Remove the taints on the control plane
+      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
 - name: Join Additional Masters
   hosts: masters
   gather_facts: False
@@ -128,12 +147,25 @@
     - name: Join Master Nodes
       command: "{{ hostvars[groups['jump-server'][0]].join_command_cp }} --control-plane"
       register: master_join
+      retries: 5
+      delay: 10
+      until: master_join is succeeded
+      ignore_errors: yes
+
+    - name: Check if join was successful
+      fail:
+        msg: "Joining the master node failed after several attempts. Check the error logs for more details."
+      when: master_join is failed
 
     - name: Show Results
-      debug: var=master_join.stdout
+      debug:
+        var: master_join.stdout
+      when: master_join is succeeded
 
     - name: Show Errors
-      debug: var=master_join.stderr
+      debug:
+        var: master_join.stderr
+      when: master_join is failed
 
 - name: Join Kubernetes Cluster
   hosts: workers
@@ -142,9 +174,22 @@
     - name: Join Kubernetes Cluster as a Worker
       command: "{{ hostvars[groups['jump-server'][0]].join_command_worker }}"
       register: worker_join
+      retries: 5
+      delay: 10
+      until: worker_join is succeeded
+      ignore_errors: yes
+
+    - name: Check if join was successful
+      fail:
+        msg: "Joining the worker node failed after several attempts. Check the error logs for more details."
+      when: worker_join is failed
 
     - name: Show Results
-      debug: var=worker_join.stdout
+      debug:
+        var: worker_join.stdout
+      when: worker_join is succeeded
 
     - name: Show Errors
-      debug: var=worker_join.stderr
+      debug:
+        var: worker_join.stderr
+      when: worker_join is failed

@@ -14,7 +14,7 @@ resource "hcloud_ssh_key" "jump_server" {
 resource "hcloud_server" "jump-server" {
   name        = "jump-server"
   image       = "ubuntu-22.04"
-  server_type = "cx21"
+  server_type = "cx22"
   datacenter  = "hel1-dc2"
   ssh_keys    = ["My SSH KEY"]
   public_net {
@@ -88,7 +88,7 @@ resource "hcloud_server" "kube-master" {
   count       = 1
   name        = "kube-master-${count.index + 1}"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx22"
   datacenter  = "hel1-dc2"
   ssh_keys    = ["My SSH KEY", "JUMP SERVER SSH KEY"]
   public_net {
@@ -98,7 +98,7 @@ resource "hcloud_server" "kube-master" {
 
   network {
     network_id = hcloud_network.kubernetes-node-network.id
-    ip         = "172.16.0.20${count.index + 1}"
+    ip         = "172.16.0.10${count.index + 1}"
   }
 
   depends_on = [
@@ -111,7 +111,7 @@ resource "hcloud_server" "kube-worker" {
   count       = 1
   name        = "kube-worker-${count.index + 1}"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx22"
   datacenter  = "hel1-dc2"
   ssh_keys    = ["My SSH KEY", "JUMP SERVER SSH KEY"]
   public_net {
@@ -121,7 +121,7 @@ resource "hcloud_server" "kube-worker" {
 
   network {
     network_id = hcloud_network.kubernetes-node-network.id
-    ip         = "172.16.0.30${count.index + 1}"
+    ip         = "172.16.0.20${count.index + 1}"
   }
 
   depends_on = [
