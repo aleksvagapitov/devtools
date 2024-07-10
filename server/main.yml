@@ -16,82 +16,24 @@
     - import_tasks: tasks/iptables.yml
     - import_tasks: tasks/docker.yml
 
-- name: Install Kubernetes
-  hosts: all
+- hosts: all
   tasks:
-    - name: Install dependencies
+    - name: Install k3s dependencies
       apt:
         name:
-          - apt-transport-https
-          - ca-certificates
           - curl
           - gnupg
           - lsb-release
         state: present
         update_cache: yes
 
-    - name: Disable swapoff
-      shell: |
-        swapoff -a && sed -i '/ swap / s/^/#/' /etc/fstab
-
-    - name: Ensure /etc/apt/keyrings directory exists
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-
-    - name: Add Kubernetes GPG key
-      apt_key:
-        url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
-        state: present
-        keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-    - name: Add Kubernetes APT repository
-      apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
-        state: present
-
-    - name: Update apt package index
-      apt:
-        update_cache: yes
-
-    - name: Install Kubernetes packages
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-          - containerd
-        state: present
-        update_cache: yes
-
-    - name: Hold Kubernetes packages at current version
-      shell: |
-        apt-mark hold kubelet kubeadm kubectl
-    
-    - name: Configure containerd service
-      shell: |
-        sh -c "containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sed 's|registry.k8s.io/pause:3.[4-8]|registry.k8s.io/pause:3.9|' > /etc/containerd/config.toml" && systemctl restart containerd.service
+- hosts: jump-server
+  tasks:
+    - name: Initialize k3s cluster with embedded etcd
+      shell: "curl -sfL https://get.k3s.io | sh -s - server --cluster-init"
       args:
         executable: /bin/bash
     
-    - name: Restart containerd service
-      shell: |
-        systemctl restart containerd.service && systemctl restart kubelet.service && systemctl enable kubelet.service
-
-- name: Initialize Kubernetes Master
-  hosts: jump-server
-  gather_facts: False
-  tasks:
-    - name: Initialize Kubernetes Master
-      command: kubeadm init --control-plane-endpoint="{{ hostvars[groups['jump-server'][0]].public_ip }}" --upload-certs --pod-network-cidr=192.168.0.0/16
-      register: kubeadm_init
-      ignore_errors: yes
-
-    - name: Check if initialization was successful
-      fail:
-        msg: "Kubeadm initialization failed. Please check the output of kubeadm init command."
-      when: kubeadm_init.failed
-
     - name: Create .kube directory if not exists
       file:
         path: "/root/.kube"
@@ -100,12 +42,12 @@
 
     - name: Copy admin.conf to root's kube config
       copy:
-        src: "/etc/kubernetes/admin.conf"
+        src: "/etc/rancher/k3s/k3s.yaml"
         dest: "/root/.kube/config"
         remote_src: yes
         owner: root
         group: root
-        mode: 0600
+        mode: 0644
 
     - name: Set KUBECONFIG environment variable for root
       lineinfile:
@@ -113,83 +55,24 @@
         line: "export KUBECONFIG=/root/.kube/config"
         create: yes
 
-    - name: Get Certificate Key
-      command: kubeadm init phase upload-certs --upload-certs
-      register: cert_key
-      changed_when: False
+    - name: Get k3s node token
+      shell: "cat /var/lib/rancher/k3s/server/node-token"
+      register: k3s_token
 
-    - name: Get Join Command for Control Plane Nodes
-      command: kubeadm token create --print-join-command --certificate-key "{{ cert_key.stdout_lines[-1] }}"
-      register: join_command_cp
-
-    - name: Get Join Command for Worker Nodes
-      command: kubeadm token create --print-join-command
-      register: join_command_worker
-
-    - name: Save Join Commands
+    - name: Set node token as a fact
       set_fact:
-        join_command_cp: "{{ join_command_cp.stdout }}"
-        join_command_worker: "{{ join_command_worker.stdout }}"
+        node_token: "{{ k3s_token.stdout }}" 
 
-    - name: Install the Tigera Calico
-      command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
-
-    - name: Install Calico Network Plugin
-      command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml
-
-    - name: Remove the taints on the control plane
-      command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-
-- name: Join Additional Masters
-  hosts: masters
-  gather_facts: False
+- hosts: masters
   tasks:
-    - name: Join Master Nodes
-      command: "{{ hostvars[groups['jump-server'][0]].join_command_cp }} --control-plane"
-      register: master_join
-      retries: 5
-      delay: 10
-      until: master_join is succeeded
-      ignore_errors: yes
+    - name: Join k3s cluster as master
+      shell: "curl -sfL https://get.k3s.io | K3S_URL='https://{{ hostvars[groups['jump-server'][0]].public_ip }}:6443' K3S_TOKEN='{{ hostvars[groups['jump-server'][0]].node_token }}' sh -s - server"
+      args:
+        executable: /bin/bash
 
-    - name: Check if join was successful
-      fail:
-        msg: "Joining the master node failed after several attempts. Check the error logs for more details."
-      when: master_join is failed
-
-    - name: Show Results
-      debug:
-        var: master_join.stdout
-      when: master_join is succeeded
-
-    - name: Show Errors
-      debug:
-        var: master_join.stderr
-      when: master_join is failed
-
-- name: Join Kubernetes Cluster
-  hosts: workers
-  gather_facts: False
+- hosts: workers
   tasks:
-    - name: Join Kubernetes Cluster as a Worker
-      command: "{{ hostvars[groups['jump-server'][0]].join_command_worker }}"
-      register: worker_join
-      retries: 5
-      delay: 10
-      until: worker_join is succeeded
-      ignore_errors: yes
-
-    - name: Check if join was successful
-      fail:
-        msg: "Joining the worker node failed after several attempts. Check the error logs for more details."
-      when: worker_join is failed
-
-    - name: Show Results
-      debug:
-        var: worker_join.stdout
-      when: worker_join is succeeded
-
-    - name: Show Errors
-      debug:
-        var: worker_join.stderr
-      when: worker_join is failed
+    - name: Join k3s cluster as worker
+      shell: "curl -sfL https://get.k3s.io | K3S_URL='https://{{ hostvars[groups['jump-server'][0]].public_ip }}:6443' K3S_TOKEN='{{ hostvars[groups['jump-server'][0]].node_token }}' sh -"
+      args:
+        executable: /bin/bash
