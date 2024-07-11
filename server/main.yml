@@ -34,6 +34,14 @@
       args:
         executable: /bin/bash
     
+    - name: Name the server jump-server
+      shell: "kubectl label nodes jump-server nodeName=jump-server"
+    
+    - name: Configure cert-manager
+      shell: |
+        kubectl create namespace cert-manager
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
+    
     - name: Create .kube directory if not exists
       file:
         path: "/root/.kube"

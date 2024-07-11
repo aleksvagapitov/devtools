@@ -63,7 +63,7 @@
     dest: /etc/docker/daemon.json
     content: |
       { 
-        "insecure-registries":["http://my-registry:55000"]
+        "insecure-registries":["http://my-registry:5000"]
       }
 
 - name: Create Docker Service Directory
