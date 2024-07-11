@@ -7,7 +7,7 @@ metadata:
   labels:
     app: jenkins-ingress
   name: jenkins-ingress
-  namespace: default
+  namespace: infrastructure
 spec:
   rules:
   - host: jenkins.aleksvagapitov.com
@@ -34,7 +34,7 @@ metadata:
   labels:
     app: registry-ingress
   name: registry-ingress
-  namespace: default
+  namespace: infrastructure
 spec:
   rules:
   - host: registry.aleksvagapitov.com
@@ -51,4 +51,3 @@ spec:
   - hosts:
     - registry.aleksvagapitov.com
     secretName: registry-aleksvagapitov-com-tls
-

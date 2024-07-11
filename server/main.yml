@@ -40,6 +40,7 @@
     - name: Configure cert-manager
       shell: |
         kubectl create namespace cert-manager
+        kubectl create namespace infrastructure
         kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
     
     - name: Create .kube directory if not exists
