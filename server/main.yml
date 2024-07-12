@@ -26,22 +26,21 @@
           - lsb-release
         state: present
         update_cache: yes
+      
+    - name: Ensure /etc/rancher/k3s directory exists
+      file:
+        path: "/etc/rancher/k3s"
+        state: directory
+
+    - name: Copy registries.yaml to /etc/rancher/k3s
+      template: src=registries.yaml dest=/etc/rancher/k3s/registries.yaml
 
 - hosts: jump-server
   tasks:
     - name: Initialize k3s cluster with embedded etcd
       shell: "curl -sfL https://get.k3s.io | sh -s - server --cluster-init"
       args:
-        executable: /bin/bash
-    
-    - name: Name the server jump-server
-      shell: "kubectl label nodes jump-server nodeName=jump-server"
-    
-    - name: Configure cert-manager
-      shell: |
-        kubectl create namespace cert-manager
-        kubectl create namespace infrastructure
-        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
+        executable: /bin/bash 
     
     - name: Create .kube directory if not exists
       file:

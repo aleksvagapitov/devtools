@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [ "$EUID" -ne 0 ]; then
-    echo "You need to run this script as root"
-    exit 1
-fi
-
 chmod 600 ~/.ssh/jump-server
 
 #To directly modify sshd_config.
@@ -21,5 +16,3 @@ apt-get install -y mosh
 
 #Check the exit status of the last command
 systemctl restart sshd
-
-exit 0

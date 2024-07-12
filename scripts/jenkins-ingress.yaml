@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    kubernetes.io/ingress.class: traefik
+  labels:
+    app: jenkins-ingress
+  name: jenkins-ingress
+  namespace: infra
+spec:
+  rules:
+  - host: jenkins.aleksvagapitov.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: jenkins
+            port: 
+              number: 8080
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - jenkins.aleksvagapitov.com
+    secretName: jenkins-aleksvagapitov-com-tls

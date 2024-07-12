@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Name current node jump-server
+kubectl label nodes jump-server nodeName=jump-server
+
+# Create namespaces 
+kubectl create namespace cert-manager
+kubectl create namespace infra
+
+# Start certificate management service
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
+kubectl apply -f cert-manager.yaml
+
+# Start registry
+kubectl apply -f registry.yaml
+kubectl wait --for=condition=Ready pod -n infra -l app=registry --timeout=300s
+
+# Build docker image for jenkins
+docker build -t my-registry:30000/custom-jenkins:lts jenkins/
+docker push my-registry:30000/custom-jenkins:lts
+
+# Start jenkins service and copy jenkins password
+cp /root/.kube/config /root/.kube/jenkins-config
+sed -i 's|127.0.0.1:6443|kubernetes.default.svc:443|g' /root/.kube/jenkins-config
+kubectl apply -f jenkins.yaml
+kubectl wait --for=condition=Ready pod -n infra -l app=jenkins --timeout=300s
+
+# Apply certificate managed routes
+kubectl apply -f jenkins-ingress.yaml
+kubectl apply -f registry-ingress.yaml
+
+# Command to copy password
+#kubectl cp infra/<pod-name>:var/jenkins_home/secrets/initialAdminPassword ~/jenkinsPassword
