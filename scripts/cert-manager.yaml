@@ -5,7 +5,7 @@ metadata:
   namespace: infra
 spec:
   acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
     email: aleksvagapitov@gmail.com # replace for your valid email
     privateKeySecretRef:
       name: letsencrypt-production
