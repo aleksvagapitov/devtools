@@ -9,6 +9,7 @@ kubectl create namespace infra
 
 # Start certificate management service
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.1/cert-manager.yaml
+sleep 15
 kubectl apply -f cert-manager.yaml
 
 # Start registry
@@ -29,5 +30,6 @@ kubectl wait --for=condition=Ready pod -n infra -l app=jenkins --timeout=300s
 kubectl apply -f jenkins-ingress.yaml
 kubectl apply -f registry-ingress.yaml
 
-# Command to copy password
-#kubectl cp infra/<pod-name>:var/jenkins_home/secrets/initialAdminPassword ~/jenkinsPassword
+# Copy jenkins password
+sleep 15
+kubectl cp infra/$(kubectl get pods -n infra -l app=jenkins -o jsonpath="{.items[0].metadata.name}"):var/jenkins_home/secrets/initialAdminPassword ~/jenkinsPassword
