@@ -17,8 +17,8 @@ kubectl apply -f registry.yaml
 kubectl wait --for=condition=Ready pod -n infra -l app=registry --timeout=300s
 
 # Build docker image for jenkins
-docker build -t my-registry:30000/custom-jenkins:lts jenkins/
-docker push my-registry:30000/custom-jenkins:lts
+docker build -t my-registry:32000/custom-jenkins:lts jenkins/
+docker push my-registry:32000/custom-jenkins:lts
 
 # Start jenkins service and copy jenkins password
 cp /root/.kube/config /root/.kube/jenkins-config
