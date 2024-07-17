@@ -35,7 +35,7 @@ spec:
       serviceAccountName: jenkins
       containers:
       - name: jenkins
-        image: my-registry:30000/custom-jenkins:lts
+        image: my-registry:32000/custom-jenkins:lts
         securityContext:
           runAsUser: 0
         ports:

@@ -1,9 +1,9 @@
 mirrors:
-  "my-registry:30000":
+  "my-registry:32000":
     endpoint:
-      - "http://my-registry:30000"
+      - "http://my-registry:32000"
 
 configs:
-  "my-registry:30000":
+  "my-registry:32000":
     tls:
       insecure_skip_verify: true
