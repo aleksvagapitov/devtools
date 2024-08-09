@@ -15,20 +15,18 @@ kubectl apply -f cert-manager.yaml
 # Start registry
 kubectl apply -f registry.yaml
 kubectl wait --for=condition=Ready pod -n infra -l app=registry --timeout=300s
+kubectl apply -f registry-ingress.yaml
 
 # Build docker image for jenkins
-docker build -t my-registry:32000/custom-jenkins:lts jenkins/
-docker push my-registry:32000/custom-jenkins:lts
+docker build -t registry.aleksvagapitov.com/custom-jenkins:lts jenkins/
+docker push registry.aleksvagapitov.com/custom-jenkins:lts
 
 # Start jenkins service and copy jenkins password
 cp /root/.kube/config /root/.kube/jenkins-config
 sed -i 's|127.0.0.1:6443|kubernetes.default.svc:443|g' /root/.kube/jenkins-config
 kubectl apply -f jenkins.yaml
 kubectl wait --for=condition=Ready pod -n infra -l app=jenkins --timeout=300s
-
-# Apply certificate managed routes
 kubectl apply -f jenkins-ingress.yaml
-kubectl apply -f registry-ingress.yaml
 
 # Copy jenkins password
 sleep 15

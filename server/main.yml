@@ -32,9 +32,6 @@
         path: "/etc/rancher/k3s"
         state: directory
 
-    - name: Copy registries.yaml to /etc/rancher/k3s
-      template: src=registries.yaml dest=/etc/rancher/k3s/registries.yaml
-
 - hosts: jump-server
   tasks:
     - name: Initialize k3s cluster with embedded etcd

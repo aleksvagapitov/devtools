@@ -53,41 +53,5 @@
     dest: /usr/local/bin/docker-compose
     mode: 'u+x,g+x'
 
-- name: Ensure etc/docker folder exists
-  file:
-    path: /etc/docker
-    state: directory  
-
-- name: Add Docker config
-  copy:
-    dest: /etc/docker/daemon.json
-    content: |
-      { 
-        "insecure-registries":["http://my-registry:32000"]
-      }
-
-- name: Create Docker Service Directory
-  shell: mkdir -p /etc/systemd/system/docker.service.d/
-
-- name: Add Docker config
-  copy:
-    dest: /etc/systemd/system/docker.service.d/override.conf
-    content: |
-      [Service]
-      ExecStart=
-      ExecStart=/usr/bin/dockerd --config-file /etc/docker/daemon.json
-
-- name: Change Default Docker Options
-  copy:
-    dest: /etc/default/docker
-    content: |
-      DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4"
-
-- name: Add IP Forwarding
-  copy:
-    dest: /proc/sys/net/ipv4/ip_forward
-    content: |
-      1
-
 - name: Start Docker
   shell: systemctl daemon-reload && systemctl start docker.socket && systemctl restart docker

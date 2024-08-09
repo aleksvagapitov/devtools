@@ -15,7 +15,7 @@ resource "hcloud_server" "jump-server" {
   name        = "jump-server"
   image       = "ubuntu-22.04"
   server_type = "cx22"
-  location    = "nbg1"
+  location    = "fsn1"
   ssh_keys    = ["My SSH KEY"]
   public_net {
     ipv4_enabled = true
@@ -89,7 +89,7 @@ resource "hcloud_server" "kube-master" {
   name        = "kube-master-${count.index + 1}"
   image       = "ubuntu-22.04"
   server_type = "cx22"
-  location    = "nbg1"
+  location    = "fsn1"
   ssh_keys    = ["My SSH KEY", "JUMP SERVER SSH KEY"]
   public_net {
     ipv4_enabled = true
@@ -112,7 +112,7 @@ resource "hcloud_server" "kube-worker" {
   name        = "kube-worker-${count.index + 1}"
   image       = "ubuntu-22.04"
   server_type = "cx22"
-  location    = "nbg1"
+  location    = "fsn1"
   ssh_keys    = ["My SSH KEY", "JUMP SERVER SSH KEY"]
   public_net {
     ipv4_enabled = true
