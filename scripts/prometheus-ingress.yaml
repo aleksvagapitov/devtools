@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  labels:
+    app: prometheus-ingress
+  name: prometheus-ingress
+  namespace: monitoring
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: prometheus.aleksvagapitov.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - prometheus.aleksvagapitov.com
+    secretName: prometheus-aleksvagapitov-com-tls

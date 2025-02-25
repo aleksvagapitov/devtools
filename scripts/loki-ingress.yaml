@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  labels:
+    app: loki-ingress
+  name: loki-ingress
+  namespace: logging
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: loki.aleksvagapitov.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: loki
+            port:
+              number: 3100
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - loki.aleksvagapitov.com
+    secretName: loki-aleksvagapitov-com-tls

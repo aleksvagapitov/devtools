@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  labels:
+    app: jaeger-ingress
+  name: jaeger-ingress
+  namespace: logging
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: jaeger.aleksvagapitov.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: jaeger
+            port:
+              number: 16686
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - jaeger.aleksvagapitov.com
+    secretName: jaeger-aleksvagapitov-com-tls

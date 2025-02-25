@@ -1,7 +1,7 @@
 # Create an ssh-key
 resource "hcloud_ssh_key" "default" {
   name       = "My SSH KEY"
-  public_key = file("~/.ssh/devtools-kube.pub")
+  public_key = file("~/.ssh/devtools.pub")
 }
 
 # Create the jump-server ssh-key
@@ -38,7 +38,7 @@ resource "hcloud_server" "jump-server" {
     connection {
       type        = "ssh"
       host        = self.ipv4_address
-      private_key = file("~/.ssh/devtools-kube")
+      private_key = file("~/.ssh/devtools")
       user        = "root"
       timeout     = "2m"
     }
@@ -50,7 +50,7 @@ resource "hcloud_server" "jump-server" {
     connection {
       type        = "ssh"
       host        = self.ipv4_address
-      private_key = file("~/.ssh/devtools-kube")
+      private_key = file("~/.ssh/devtools")
       user        = "root"
       timeout     = "2m"
     }
@@ -63,7 +63,7 @@ resource "hcloud_server" "jump-server" {
     connection {
       type        = "ssh"
       host        = self.ipv4_address
-      private_key = file("~/.ssh/devtools-kube")
+      private_key = file("~/.ssh/devtools")
       user        = "root"
       timeout     = "2m"
     }
@@ -76,7 +76,7 @@ resource "hcloud_server" "jump-server" {
     connection {
       type        = "ssh"
       host        = self.ipv4_address
-      private_key = file("~/.ssh/devtools-kube")
+      private_key = file("~/.ssh/devtools")
       user        = "root"
       timeout     = "2m"
     }
@@ -168,7 +168,7 @@ resource "null_resource" "copy_inventory_to_jump_server" {
     connection {
       type        = "ssh"
       host        = hcloud_server.jump-server.ipv4_address
-      private_key = file("~/.ssh/devtools-kube")
+      private_key = file("~/.ssh/devtools")
       user        = "root"
       timeout     = "2m"
     }
