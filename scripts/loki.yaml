@@ -3,16 +3,17 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: loki-configmap
+  namespace: logging
 data:
   local-config.yaml: |
     auth_enabled: false
 
     server:
+      http_listen_address: 0.0.0.0
       http_listen_port: 3100
       grpc_listen_port: 9096
 
     common:
-      instance_addr: 127.0.0.1
       path_prefix: /tmp/loki
       storage:
         filesystem:
@@ -60,6 +61,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: loki
+  namespace: logging
 spec:
   selector:
     matchLabels:
@@ -90,6 +92,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: loki
+  namespace: logging
 spec:
   selector:
     app: loki
