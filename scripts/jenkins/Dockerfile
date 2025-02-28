@@ -14,8 +14,9 @@ RUN apt-get update && \
 
 
 # Install kubectl
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
-    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+RUN curl -sfL https://github.com/k3s-io/k3s/releases/latest/download/k3s \
+    -o /usr/local/bin/kubectl && \
+    chmod +x /usr/local/bin/kubectl
 
 # Switch back to the jenkins user
 USER jenkins

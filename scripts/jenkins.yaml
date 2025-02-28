@@ -35,40 +35,40 @@ spec:
       serviceAccountName: jenkins
       containers:
       - name: jenkins
-        image: jenkins/jenkins:lts
-        # image: registry.aleksvagapitov.com/custom-jenkins:lts
+        image: registry.aleksvagapitov.com/custom-jenkins:lts
+        # image: jenkins/jenkins:lts
         securityContext:
           runAsUser: 0
         ports:
         - containerPort: 8080
         - containerPort: 50000
         volumeMounts:
-        - name: docker-bin
-          mountPath: /usr/bin/docker
         - name: docker-socket
           mountPath: /var/run/docker.sock
         - name: kubectl-config
           mountPath: /root/.kube/config
-        - name: kubectl-bin
-          mountPath: /usr/local/bin/kubectl
+        # - name: docker-bin
+        #   mountPath: /usr/bin/docker
+        # - name: kubectl-bin
+        #   mountPath: /usr/local/bin/kubectl
         env:
         - name: KUBECONFIG
           value: /root/.kube/config
       volumes:
-      - name: docker-bin
-        hostPath:
-          path: /usr/bin/docker
-          type: File  
       - name: docker-socket
         hostPath:
           path: /var/run/docker.sock
       - name: kubectl-config
         hostPath:
           path: /root/.kube/jenkins-config
-      - name: kubectl-bin
-        hostPath:
-          path: /usr/local/bin/kubectl
-          type: File
+      # - name: docker-bin
+      #   hostPath:
+      #     path: /usr/bin/docker
+      #     type: File  
+      # - name: kubectl-bin
+      #   hostPath:
+      #     path: /usr/local/bin/kubectl
+      #     type: File
       nodeSelector:
         nodeName: jump-server
 ---
