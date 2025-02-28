@@ -49,7 +49,6 @@ kubectl apply -f grafana-ingress.yaml
 # Install Loki
 kubectl apply -f loki.yaml 
 kubectl apply -f promtail.yaml 
-kubectl apply -f loki-ingress.yaml 
 
 # Install Jaeger
 kubectl create namespace observability
