@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: promtail-configmap
+  namespace: logging
 data:
   promtail.yaml: |
     server:
@@ -58,6 +59,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: promtail-daemonset
+  namespace: logging
 spec:
   selector:
     matchLabels:
@@ -74,7 +76,7 @@ spec:
           args:
             - -config.file=/etc/promtail/promtail.yaml
           env:
-            - name: "HOSTNAME" # needed when using kubernetes_sd_configs
+            - name: "HOSTNAME"
               valueFrom:
                 fieldRef:
                   fieldPath: "spec.nodeName"
@@ -96,7 +98,7 @@ spec:
         - name: promtail-config
           configMap:
             name: promtail-configmap
---- # Clusterrole.yaml
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -111,14 +113,13 @@ rules:
       - get
       - watch
       - list
-
---- # ServiceAccount.yaml
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: promtail-serviceaccount
-
---- # Rolebinding.yaml
+  namespace: logging
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -126,7 +127,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: promtail-serviceaccount
-    namespace: default
+    namespace: logging
 roleRef:
   kind: ClusterRole
   name: promtail-clusterrole
